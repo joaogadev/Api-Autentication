@@ -4,13 +4,14 @@ import jakarta.persistence.*;
 
 import java.sql.Timestamp;
 import java.security.*;
+import java.util.UUID;
 
 @Entity
 @Table(name = "roles")
 public class RolesModel {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
-    private int id;
+    private UUID id;
 
     @Column(unique = true, nullable = false)
     private String name;
@@ -30,11 +31,11 @@ public class RolesModel {
         this.created_at = created_at;
     }
 
-    public int getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
@@ -61,4 +62,6 @@ public class RolesModel {
     public void setName(String name) {
         this.name = name;
     }
+
+
 }

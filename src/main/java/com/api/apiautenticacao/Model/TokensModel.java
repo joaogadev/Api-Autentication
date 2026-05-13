@@ -3,15 +3,16 @@ package com.api.apiautenticacao.Model;
 import jakarta.persistence.*;
 
 import java.sql.Timestamp;
+import java.util.UUID;
 
 @Entity
 @Table(name = "refresh_tokens")
 public class TokensModel {
     @Id
     @GeneratedValue (strategy = GenerationType.AUTO)
-    private int id;
+    private UUID id;
 
-    @ManyToOne
+    @OneToOne
     @JoinColumn(name = "user_id")
     private UserModel user;
     private String token;
@@ -31,11 +32,11 @@ public class TokensModel {
         this.created_at = created_at;
     }
 
-    public int getId() {
+    public UUID getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(UUID id) {
         this.id = id;
     }
 
