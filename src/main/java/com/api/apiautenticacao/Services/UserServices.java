@@ -1,7 +1,9 @@
 package com.api.apiautenticacao.Services;
 
 import com.api.apiautenticacao.DTO.request.CreatedUserDTO;
+import com.api.apiautenticacao.DTO.request.LoginRequestDTO;
 import com.api.apiautenticacao.DTO.request.UpdateUserDTO;
+import com.api.apiautenticacao.DTO.response.LoginReponseDTO;
 import com.api.apiautenticacao.DTO.response.ResponseUserDTO;
 import com.api.apiautenticacao.Model.RolesModel;
 import com.api.apiautenticacao.Model.UserModel;
@@ -19,8 +21,9 @@ public class UserServices {
     private UserRepository repo;
     private RolesRepository repoRoles;
     private PasswordEncoder passwordEncoder;
+    private TokenServices tokenServices;
 
-
+    //BLOCO DA AUTENTICAÇÃO
     @Transactional //Garante a integridade do banco de dados
     public ResponseUserDTO registerUser(CreatedUserDTO userDTO) {
         //Verifica se o email existe
@@ -52,6 +55,24 @@ public class UserServices {
         );
     }
 
+    public LoginReponseDTO loginUser(LoginRequestDTO loginDTO) {
+        //Procurar usuario por email
+        UserModel user = repo.findByEmail(loginDTO.email()).orElseThrow(() -> new RuntimeException("User not found with email: " + loginDTO.email()));
+
+        //Verifica se a senha existe e se é igual a senha do banco de dados
+        if (!passwordEncoder.matches(loginDTO.password(), user.getPassword())) {
+            throw new RuntimeException("Invalid password");
+        }
+
+        //Se a senha bater, chamamos o TokenService para gerar os tokens
+        // Aqui utiliza a geração do token JWT, que é o token de acesso, e o token refresh, que é o token de renovação
+        String jwt = tokenServices.generateJwtToken(user);
+        var refreshToken = tokenServices.generateToeknRefresh(user);
+
+        return new LoginReponseDTO(jwt, refreshToken.getToken());
+    }
+
+    //BLOCO DO GERENCIAMENTO
     public void deleteUser(UUID id) {
         //Procura o usuario por ID, se não encontrar lança uma exceção
         UserModel user = repo.findById(id)
@@ -84,23 +105,21 @@ public class UserServices {
 
     }
 
-    public ResponseUserDTO loginUser(String email, String password) {
-        //Procurar usuario por email
-        UserModel user = repo.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-
-        //Verifica se a senha existe e se é igual a senha do banco de dados
-        if (!passwordEncoder.matches(password, user.getPassword())) {
-            throw new RuntimeException("Invalid password");
-        }
+    public ResponseUserDTO updatePassword(String email, String password) {
+        UserModel user = repo.findByEmail(email)
+                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+        user.setPassword(passwordEncoder.encode(password));
+        UserModel userPass = repo.save(user);
 
         return new ResponseUserDTO(
-                user.getId(),
-                user.getEmail(),
-                user.isActive(),
-                user.isVerified()
+                userPass.getId(),
+                userPass.getEmail(),
+                userPass.isActive(),
+                userPass.isVerified()
         );
     }
 
+    //BLOCO DOS FIND´S
     public ResponseUserDTO findByEmail(String email) {
         //Procura o usuario por email
         return repo.findByEmail(email)
