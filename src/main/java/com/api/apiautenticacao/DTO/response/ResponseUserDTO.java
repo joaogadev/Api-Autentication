@@ -22,9 +22,16 @@ public class ResponseUserDTO {
     }
 
     public ResponseUserDTO(UUID id, String email, String name) {
+        this.id = id;
+        this.email = email;
+
     }
 
     public ResponseUserDTO(UUID id, String email, RolesModel role, boolean verified, boolean active) {
+        this.id = id;
+        this.email = email;
+        this.verified = verified;
+        this.active = active;
     }
 
     public boolean isVerified() {
@@ -47,7 +54,7 @@ public class ResponseUserDTO {
     }
 
     public void setEmail(String email) {
-        if (email != null && email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+        if (email != null && email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             this.email = email;
         } else {
             throw new IllegalArgumentException("Email no formato inválido.");

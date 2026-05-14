@@ -46,8 +46,10 @@ public class UserModel {
         this.role = role;
         this.email = email;
         this.password = password;
-        this.isActive = false;
+        this.isActive = true;
         this.isVerified = false;
+        this.createdAt = new Timestamp(System.currentTimeMillis());
+        this.updateAt = new Timestamp(System.currentTimeMillis());
     }
 
     public UUID getId() {
@@ -67,7 +69,7 @@ public class UserModel {
     }
 
     public void setEmail(String email) {
-        if (email != null && email.matches("^[A-Za-z0-9+_.-]+@(.+)$")) {
+        if (email != null && email.matches("^[A-Za-z0-9+_.-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             this.email = email;
         } else {
             throw new IllegalArgumentException("Email no formato inválido.");

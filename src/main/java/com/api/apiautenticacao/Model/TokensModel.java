@@ -12,7 +12,7 @@ public class TokensModel {
     @GeneratedValue (strategy = GenerationType.AUTO)
     private UUID id;
 
-    @OneToOne
+    @ManyToOne
     @JoinColumn(name = "user_id")
     private UserModel user;
     private String token;

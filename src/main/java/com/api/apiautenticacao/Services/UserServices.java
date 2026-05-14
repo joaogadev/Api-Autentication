@@ -7,24 +7,28 @@ import com.api.apiautenticacao.Model.RolesModel;
 import com.api.apiautenticacao.Model.UserModel;
 import com.api.apiautenticacao.repository.RolesRepository;
 import com.api.apiautenticacao.repository.UserRepository;
+import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.UUID;
 
+@Service
 public class UserServices {
     private UserRepository repo;
     private RolesRepository repoRoles;
     private PasswordEncoder passwordEncoder;
 
 
-    public ResponseUserDTO save(CreatedUserDTO userDTO) {
+    @Transactional //Garante a integridade do banco de dados
+    public ResponseUserDTO registerUser(CreatedUserDTO userDTO) {
         //Verifica se o email existe
         if (repo.existsByEmail(userDTO.getEmail())) {
             throw new RuntimeException("Email já cadastrado");
         }
 
-        //Caso o email já exista, ele salva o user com a role user
+        //Caso o email não exista, ele salva o user com a role user
         RolesModel role = repoRoles
                 .findByName("USER")
                 .orElseThrow(() -> new RuntimeException("Role 'USER' não encontrada"));
@@ -48,7 +52,7 @@ public class UserServices {
         );
     }
 
-    public void delete(UUID id) {
+    public void deleteUser(UUID id) {
         //Procura o usuario por ID, se não encontrar lança uma exceção
         UserModel user = repo.findById(id)
                 .orElseThrow(() -> new RuntimeException("User not found with id: " + id));
@@ -57,7 +61,7 @@ public class UserServices {
         repo.delete(user);
     }
 
-    public ResponseUserDTO update(UUID id, UpdateUserDTO userDTO) {
+    public ResponseUserDTO updateUpdate(UUID id, UpdateUserDTO userDTO) {
         //procura o usuario por ID
         UserModel user = repo
                 .findById(id)
@@ -79,6 +83,24 @@ public class UserServices {
         );
 
     }
+
+    public ResponseUserDTO loginUser(String email, String password) {
+        //Procurar usuario por email
+        UserModel user = repo.findByEmail(email).orElseThrow(() -> new RuntimeException("User not found with email: " + email));
+
+        //Verifica se a senha existe e se é igual a senha do banco de dados
+        if (!passwordEncoder.matches(password, user.getPassword())) {
+            throw new RuntimeException("Invalid password");
+        }
+
+        return new ResponseUserDTO(
+                user.getId(),
+                user.getEmail(),
+                user.isActive(),
+                user.isVerified()
+        );
+    }
+
     public ResponseUserDTO findByEmail(String email) {
         //Procura o usuario por email
         return repo.findByEmail(email)
