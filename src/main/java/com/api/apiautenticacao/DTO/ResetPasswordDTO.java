@@ -1,4 +1,4 @@
-package com.api.apiautenticacao.DTO.response;
+package com.api.apiautenticacao.DTO;
 
-public record ResetPasswordDTO(String tokem, String newPassword) {
+public record ResetPasswordDTO(String token, String newPassword) {
 }
