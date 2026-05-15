@@ -12,6 +12,7 @@ import com.api.apiautenticacao.repository.RolesRepository;
 import com.api.apiautenticacao.repository.UserRepository;
 import com.api.apiautenticacao.repository.PasswordResetTokenRepository;
 import jakarta.transaction.Transactional;
+import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 @Service
 public class UserServices {
+    private final EmailServices emailServices;
     private UserRepository repo;
     private RolesRepository repoRoles;
     private PasswordEncoder passwordEncoder;
@@ -30,12 +32,13 @@ public class UserServices {
 
     public UserServices(UserRepository repo, RolesRepository repoRoles,
                         PasswordEncoder passwordEncoder, TokenServices tokenService,
-                        PasswordResetTokenRepository resetTokenRepo) {
+                        PasswordResetTokenRepository resetTokenRepo, EmailServices emailServices) {
         this.repo = repo;
         this.repoRoles = repoRoles;
         this.passwordEncoder = passwordEncoder;
         this.tokenServices = tokenService;
         this.resetTokenRepo = resetTokenRepo;
+        this.emailServices = emailServices;
     }
 
     //BLOCO DA AUTENTICAÇÃO
@@ -184,7 +187,7 @@ public class UserServices {
         resetTokenRepo.save(newTokenModel);
 
         //Lógica para envio do email
-        System.out.println("🚨 [TESTE] Link de recuperação: http://localhost:8080/auth/redefinir-senha?token=" + newToken);
+        emailServices.sendEmail(user.getEmail(), newToken);
     }
 
     @Transactional
