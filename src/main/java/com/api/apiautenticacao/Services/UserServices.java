@@ -3,17 +3,21 @@ package com.api.apiautenticacao.Services;
 import com.api.apiautenticacao.DTO.request.CreatedUserDTO;
 import com.api.apiautenticacao.DTO.request.LoginRequestDTO;
 import com.api.apiautenticacao.DTO.request.UpdateUserDTO;
-import com.api.apiautenticacao.DTO.response.LoginReponseDTO;
+import com.api.apiautenticacao.DTO.response.LoginResponseDTO;
 import com.api.apiautenticacao.DTO.response.ResponseUserDTO;
+import com.api.apiautenticacao.Model.PasswordResetTokenModel;
 import com.api.apiautenticacao.Model.RolesModel;
 import com.api.apiautenticacao.Model.UserModel;
 import com.api.apiautenticacao.repository.RolesRepository;
 import com.api.apiautenticacao.repository.UserRepository;
+import com.api.apiautenticacao.repository.PasswordResetTokenRepository;
 import jakarta.transaction.Transactional;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 @Service
@@ -22,6 +26,17 @@ public class UserServices {
     private RolesRepository repoRoles;
     private PasswordEncoder passwordEncoder;
     private TokenServices tokenServices;
+    private PasswordResetTokenRepository resetTokenRepo;
+
+    public UserServices(UserRepository repo, RolesRepository repoRoles,
+                        PasswordEncoder passwordEncoder, TokenServices tokenService,
+                        PasswordResetTokenRepository resetTokenRepo) {
+        this.repo = repo;
+        this.repoRoles = repoRoles;
+        this.passwordEncoder = passwordEncoder;
+        this.tokenServices = tokenService;
+        this.resetTokenRepo = resetTokenRepo;
+    }
 
     //BLOCO DA AUTENTICAÇÃO
     @Transactional //Garante a integridade do banco de dados
@@ -55,7 +70,7 @@ public class UserServices {
         );
     }
 
-    public LoginReponseDTO loginUser(LoginRequestDTO loginDTO) {
+    public LoginResponseDTO loginUser(LoginRequestDTO loginDTO) {
         //Procurar usuario por email
         UserModel user = repo.findByEmail(loginDTO.email()).orElseThrow(() -> new RuntimeException("User not found with email: " + loginDTO.email()));
 
@@ -69,7 +84,7 @@ public class UserServices {
         String jwt = tokenServices.generateJwtToken(user);
         var refreshToken = tokenServices.generateToeknRefresh(user);
 
-        return new LoginReponseDTO(jwt, refreshToken.getToken());
+        return new LoginResponseDTO(jwt, refreshToken.getToken());
     }
 
     //BLOCO DO GERENCIAMENTO
@@ -157,5 +172,32 @@ public class UserServices {
                         user.isVerified(),
                         user.isActive()
                 )).toList();
+    }
+
+    @Transactional
+    public void solicitarRecuperarSenha(String email) {
+        //Buscar o usuário
+        Optional<UserModel> userVerified = repo.findByEmail(email);
+        //Apenas encerrar o método evita que possiveis invasores fiquem testando outros emails caso não encontrem um existente
+        if (userVerified.isEmpty()) {
+            return;
+        }
+
+        UserModel user = userVerified.get();
+
+        //Limpa todos os tokens antigos do usuario
+        resetTokenRepo.deleteByUser(user.getId());
+
+        //Gera uma nova chave unica
+        String newToken = UUID.randomUUID().toString();
+        //Tempo para expirar o a chave unica
+        Timestamp expiresTime = new Timestamp(System.currentTimeMillis() + 900000);
+        //Nova entidade de token de reset de senha para o salvar no banco
+        PasswordResetTokenModel newTokenModel = new PasswordResetTokenModel(newToken, user, expiresTime);
+        //Salva o token no banco de dados
+        resetTokenRepo.save(newTokenModel);
+
+        //Lógica para envio do email
+        System.out.println("🚨 [TESTE] Link de recuperação: http://localhost:8080/auth/redefinir-senha?token=" + newToken);
     }
 }

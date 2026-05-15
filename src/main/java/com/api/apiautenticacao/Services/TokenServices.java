@@ -7,6 +7,7 @@ import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.security.core.token.TokenService;
+import org.springframework.stereotype.Service;
 
 import java.security.Key;
 import java.sql.Timestamp;
@@ -15,6 +16,7 @@ import java.util.UUID;
 
 import static java.lang.System.currentTimeMillis;
 
+@Service
 public class TokenServices {
     private TokensRepository repo;
     private final TokenService tk;
