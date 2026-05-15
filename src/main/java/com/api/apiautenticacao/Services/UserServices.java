@@ -120,20 +120,6 @@ public class UserServices {
 
     }
 
-    public ResponseUserDTO updatePassword(String email, String password) {
-        UserModel user = repo.findByEmail(email)
-                .orElseThrow(() -> new RuntimeException("User not found with email: " + email));
-        user.setPassword(passwordEncoder.encode(password));
-        UserModel userPass = repo.save(user);
-
-        return new ResponseUserDTO(
-                userPass.getId(),
-                userPass.getEmail(),
-                userPass.isActive(),
-                userPass.isVerified()
-        );
-    }
-
     //BLOCO DOS FIND´S
     public ResponseUserDTO findByEmail(String email) {
         //Procura o usuario por email
@@ -199,5 +185,25 @@ public class UserServices {
 
         //Lógica para envio do email
         System.out.println("🚨 [TESTE] Link de recuperação: http://localhost:8080/auth/redefinir-senha?token=" + newToken);
+    }
+
+    @Transactional
+    public void redefinirSenha(String token, String newPassword) {
+
+        //Valida se o token existe e se é válido, caso contrário lança uma exceção
+        PasswordResetTokenModel resetToken = resetTokenRepo.findByToken(token)
+                .orElseThrow(() -> new RuntimeException("Token de recuperação inválido ou inexistente."));
+
+        //Exclui token que passaram da validade
+        if (resetToken.getExpiresAt().before(new Timestamp(System.currentTimeMillis()))) {
+            resetTokenRepo.delete(resetToken);
+            throw new RuntimeException("Este link de recuperação expirou.");
+        }
+
+        UserModel user = resetToken.getUser(); //Busca o usuário associado
+        user.setPassword(passwordEncoder.encode(newPassword));//criptografa a nova senha
+        repo.save(user); //salva no banco
+
+        resetTokenRepo.delete(resetToken); //Limpa o token do banco, para evitar reutilização
     }
 }
