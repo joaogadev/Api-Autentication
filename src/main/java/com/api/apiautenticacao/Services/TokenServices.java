@@ -6,7 +6,6 @@ import com.api.apiautenticacao.repository.TokensRepository;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.security.Keys;
-import org.springframework.security.core.token.TokenService;
 import org.springframework.stereotype.Service;
 
 import java.security.Key;
@@ -19,7 +18,6 @@ import static java.lang.System.currentTimeMillis;
 @Service
 public class TokenServices {
     private TokensRepository repo;
-    private final TokenService tk;
 
     //Chave secreta para assinatura do jwt, gerada usando a biblioteca jjwt
     private final Key jwtSecretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256);
@@ -29,8 +27,8 @@ public class TokenServices {
     //tempo de expiração do jwt refresh de 7 dias
     private final long jwtRefreshMs = 604800000;
 
-    public TokenServices(TokenService tk) {
-        this.tk = tk;
+    public TokenServices() {
+
     }
 
     //Método do Token Acess

@@ -5,6 +5,8 @@ import jakarta.persistence.*;
 import java.sql.Timestamp;
 import java.util.UUID;
 
+@Entity
+@Table(name = "password_reset_tokens")
 public class PasswordResetTokenModel {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
